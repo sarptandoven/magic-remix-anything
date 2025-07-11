@@ -3,6 +3,19 @@ import sys
 import warnings
 warnings.filterwarnings("ignore")
 
+# Apply PyTorch 2.6+ compatibility patch early
+try:
+    import pytorch_compatibility
+except ImportError:
+    # If compatibility module not available, apply manual fix
+    import torch
+    if hasattr(torch, '__version__'):
+        major, minor = map(int, torch.__version__.split('.')[:2])
+        if major > 2 or (major == 2 and minor >= 6):
+            print("⚠️ PyTorch 2.6+ detected - using weights_only=False for model loading")
+except Exception as e:
+    print(f"⚠️ PyTorch compatibility check failed: {e}")
+
 class MockAudioop:
     def __getattr__(self, name):
         def mock_func(*args, **kwargs):

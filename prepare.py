@@ -82,7 +82,7 @@ def ASTpredict():
     # now load the visualization model
     ast_mdl = ASTModelVis(label_dim=527, input_tdim=input_tdim, imagenet_pretrain=False, audioset_pretrain=False)
     print(f'[*INFO] load checkpoint: {checkpoint_path}')
-    checkpoint = torch.load(checkpoint_path, map_location='cuda')
+    checkpoint = torch.load(checkpoint_path, map_location='cuda', weights_only=False)
     audio_model = torch.nn.DataParallel(ast_mdl, device_ids=[0])
     audio_model.load_state_dict(checkpoint)
     audio_model = audio_model.to(torch.device("cuda:0"))

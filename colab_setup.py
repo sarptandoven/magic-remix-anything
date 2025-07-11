@@ -200,7 +200,8 @@ class DependencyInstaller:
             "datasets",
             "omegaconf", 
             "hydra-core",
-            "psutil"
+            "psutil",
+            "packaging>=21.0"
         ]
         
         print_status("Installing utility dependencies...", "progress")

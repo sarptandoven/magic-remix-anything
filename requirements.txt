@@ -18,4 +18,5 @@ groundingdino-py==0.4.0
 gdown
 IPython
 wget
-psutil>=5.9.0 
+psutil>=5.9.0
+packaging>=21.0 

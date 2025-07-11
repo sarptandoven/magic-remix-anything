@@ -89,7 +89,7 @@ class Detector:
             args.device = device
             self.gd = build_grounding_dino(args)
 
-            checkpoint = torch.load(grounding_dino_ckpt, map_location='cpu')
+            checkpoint = torch.load(grounding_dino_ckpt, map_location='cpu', weights_only=False)
             log = self.gd.load_state_dict(clean_state_dict(checkpoint['model']), strict=False)
             print("Model loaded from {} \n => {}".format(grounding_dino_ckpt, log))
             self.gd.eval()
