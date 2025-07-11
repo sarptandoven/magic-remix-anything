@@ -17,4 +17,5 @@ pycocotools
 groundingdino-py==0.4.0
 gdown
 IPython
-wget 
+wget
+psutil>=5.9.0 

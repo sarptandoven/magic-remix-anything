@@ -162,7 +162,7 @@ class DependencyInstaller:
             "matplotlib",
             "scipy",
             "scikit-image",
-            "pillow",
+            "pillow==10.4.0",  # Fix version conflict
             "tqdm"
         ]
         
@@ -207,6 +207,10 @@ class DependencyInstaller:
         for dep in util_deps:
             cmd = f"pip install -q {dep}"
             DependencyInstaller.run_command(cmd, f"Installing {dep}")
+        
+        # Fix Pillow version conflict
+        print_status("Fixing Pillow version conflict...", "progress")
+        DependencyInstaller.run_command("pip install -q --force-reinstall pillow==10.4.0", "Fixing Pillow version")
     
     @staticmethod
     def install_sam():

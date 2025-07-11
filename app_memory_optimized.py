@@ -726,6 +726,22 @@ def seg_track_app():
     
     return demo
 
-if __name__ == "__main__":
+
+def main():
+    """Main function to launch the memory-optimized application"""
     demo = seg_track_app()
-    demo.launch(share=True, server_name="0.0.0.0", server_port=7860) 
+    demo.launch(share=True, server_name="0.0.0.0", server_port=7860)
+
+
+# Create demo object for import-based launching only when needed
+demo = None
+
+def get_demo():
+    """Get or create the demo object"""
+    global demo
+    if demo is None:
+        demo = seg_track_app()
+    return demo
+
+if __name__ == "__main__":
+    main() 

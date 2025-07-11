@@ -12,6 +12,9 @@ class MockAudioop:
 
 sys.modules["audioop"] = MockAudioop()
 
+# Import gradio early to avoid issues
+import gradio as gr
+
 # GroundingDINO workaround
 try:
     import groundingdino
@@ -43,7 +46,6 @@ except ImportError as e:
     SLConfig = MockSLConfig
 
 from PIL.ImageOps import colorize, scale
-import gradio as gr
 import importlib
 import sys
 import os
@@ -1267,8 +1269,24 @@ def seg_track_app():
             )
     
     app.queue(concurrency_count=1)
+    return app
+
+
+def main():
+    """Main function to launch the application"""
+    app = seg_track_app()
     app.launch(debug=True, enable_queue=True, share=True)
 
 
+# Create demo object for import-based launching only when needed
+demo = None
+
+def get_demo():
+    """Get or create the demo object"""
+    global demo
+    if demo is None:
+        demo = seg_track_app()
+    return demo
+
 if __name__ == "__main__":
-    seg_track_app()
+    main()

@@ -1,48 +1,37 @@
 #!/usr/bin/env python3
 """
-Magic Hour Remix Anything - Colab Launch Script
-Handles application launch with multiple fallback methods and error recovery
+Magic Hour Remix Anything - Launch Script
+Enhanced launch system with multiple fallback methods for Colab
 """
 
 import os
 import sys
 import gc
 import traceback
-import importlib.util
-from pathlib import Path
-
-# Add current directory to Python path
-sys.path.insert(0, '.')
+import subprocess
 
 def print_status(text, status="info"):
-    """Print status with appropriate emoji"""
-    emojis = {
-        "success": "✅",
-        "error": "❌", 
-        "warning": "⚠️",
-        "info": "ℹ️",
-        "progress": "🔄"
+    """Print colored status messages"""
+    colors = {
+        "success": "\033[92m✅\033[0m",
+        "error": "\033[91m❌\033[0m", 
+        "warning": "\033[93m⚠️\033[0m",
+        "progress": "\033[94m🔄\033[0m"
     }
-    print(f"{emojis.get(status, 'ℹ️')} {text}")
+    icon = colors.get(status, "ℹ️")
+    print(f"{icon} {text}")
 
 def cleanup_memory():
-    """Clean up memory before launch"""
+    """Clean up GPU and system memory"""
     print_status("Cleaning up memory before launch...", "progress")
-    
-    # Python garbage collection
     gc.collect()
     
-    # Clear PyTorch cache if available
     try:
         import torch
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-            torch.cuda.synchronize()
     except ImportError:
         pass
-    
-    # Force garbage collection again
-    gc.collect()
     
     print_status("Memory cleanup completed", "success")
 
@@ -51,57 +40,56 @@ def get_memory_status():
     try:
         import psutil
         memory = psutil.virtual_memory()
-        print(f"🔵 System Memory: {memory.used / 1024**3:.2f}GB / {memory.total / 1024**3:.2f}GB ({memory.percent:.1f}%)")
+        memory_percent = memory.percent
         
-        import torch
-        if torch.cuda.is_available():
-            gpu_memory = torch.cuda.memory_allocated() / 1024**3
-            gpu_cached = torch.cuda.memory_reserved() / 1024**3
-            print(f"🔴 GPU Memory: {gpu_memory:.2f}GB used, {gpu_cached:.2f}GB cached")
+        # GPU memory
+        gpu_info = "Unknown"
+        try:
+            import torch
+            if torch.cuda.is_available():
+                allocated = torch.cuda.memory_allocated() / 1024**3
+                cached = torch.cuda.memory_reserved() / 1024**3
+                gpu_info = f"{allocated:.2f}GB used, {cached:.2f}GB cached"
+            else:
+                gpu_info = "Not available"
+        except ImportError:
+            pass
         
-        return memory.percent
-    except Exception as e:
-        print_status(f"Could not get memory status: {e}", "warning")
+        print(f"🔵 System Memory: {memory.used / 1024**3:.2f}GB / {memory.total / 1024**3:.2f}GB ({memory_percent:.1f}%)")
+        print(f"🔴 GPU Memory: {gpu_info}")
+        
+        return memory_percent
+    except ImportError:
+        print("📊 Memory monitoring not available (psutil missing)")
         return 0
 
 def check_requirements():
-    """Check if all required files exist"""
-    required_files = ['app.py']
-    optional_files = ['app_memory_optimized.py', 'audioop.py']
-    
-    missing_required = []
-    missing_optional = []
-    
-    for file in required_files:
-        if not os.path.exists(file):
-            missing_required.append(file)
-    
-    for file in optional_files:
-        if not os.path.exists(file):
-            missing_optional.append(file)
-    
-    if missing_required:
-        print_status(f"Missing required files: {missing_required}", "error")
+    """Check if basic requirements are available"""
+    try:
+        # Check if we can import basic modules
+        import sys
+        import os
+        return True
+    except Exception as e:
+        print_status(f"Basic requirements check failed: {e}", "error")
         return False
-    
-    if missing_optional:
-        print_status(f"Missing optional files: {missing_optional}", "warning")
-    
-    return True
 
 def launch_method_1():
-    """Method 1: Direct execution of app.py"""
+    """Method 1: Direct execution using subprocess"""
     print_status("Attempting direct app launch...", "progress")
     
     try:
         # Set environment variables
-        os.environ['PYTHONPATH'] = '.'
+        env = os.environ.copy()
+        env['PYTHONPATH'] = '.'
         
-        # Execute the main app
-        with open('app.py', 'r') as f:
-            app_code = f.read()
+        # Use subprocess to run the app
+        process = subprocess.Popen([
+            sys.executable, 'app.py'
+        ], env=env, cwd='.')
         
-        exec(app_code)
+        print_status("App launched via subprocess", "success")
+        process.wait()
         return True
         
     except Exception as e:
@@ -109,15 +97,20 @@ def launch_method_1():
         return False
 
 def launch_method_2():
-    """Method 2: Memory-optimized app"""
+    """Method 2: Memory-optimized app using subprocess"""
     print_status("Attempting memory-optimized app launch...", "progress")
     
     try:
         if os.path.exists('app_memory_optimized.py'):
-            with open('app_memory_optimized.py', 'r') as f:
-                app_code = f.read()
+            env = os.environ.copy()
+            env['PYTHONPATH'] = '.'
             
-            exec(app_code)
+            process = subprocess.Popen([
+                sys.executable, 'app_memory_optimized.py'
+            ], env=env, cwd='.')
+            
+            print_status("Memory-optimized app launched via subprocess", "success")
+            process.wait()
             return True
         else:
             print_status("Memory-optimized app not found", "warning")
@@ -128,40 +121,61 @@ def launch_method_2():
         return False
 
 def launch_method_3():
-    """Method 3: Import-based launch"""
+    """Method 3: Import-based launch with proper error handling"""
     print_status("Attempting import-based launch...", "progress")
     
     try:
-        # Import required modules
-        import gradio as gr
-        print_status("Gradio imported successfully", "success")
-        
-        # Try to import app modules
+        # First check if gradio is available
         try:
-            # Add current directory to path
-            sys.path.insert(0, '.')
-            
-            # Import the main app
+            import gradio as gr
+            print_status("Gradio imported successfully", "success")
+        except ImportError as e:
+            print_status(f"Gradio import failed: {e}", "error")
+            return False
+        
+        # Set up paths
+        sys.path.insert(0, '.')
+        
+        # Import app modules with better error handling
+        try:
             import app
             print_status("App module imported successfully", "success")
             
-            # If the app has a main function or demo object, use it
-            if hasattr(app, 'demo'):
-                app.demo.launch(share=True, debug=True)
-            elif hasattr(app, 'main'):
+            # Try different launch methods in order of preference
+            if hasattr(app, 'get_demo') and callable(app.get_demo):
+                print_status("Found get_demo function, launching...", "success")
+                demo = app.get_demo()
+                demo.launch(share=True, debug=False, show_error=True, quiet=False)
+                return True
+                
+            elif hasattr(app, 'seg_track_app') and callable(app.seg_track_app):
+                print_status("Found seg_track_app function, launching...", "success")
+                demo = app.seg_track_app()
+                demo.launch(share=True, debug=False, show_error=True, quiet=False)
+                return True
+                
+            elif hasattr(app, 'main') and callable(app.main):
+                print_status("Found main function, launching...", "success")
                 app.main()
+                return True
+                
+            elif hasattr(app, 'demo') and app.demo is not None:
+                print_status("Found demo object, launching...", "success")
+                app.demo.launch(share=True, debug=False, show_error=True, quiet=False)
+                return True
+                
             else:
-                print_status("No launch method found in app module", "warning")
+                print_status("No valid launch method found in app module", "warning")
+                print(f"Available attributes: {[attr for attr in dir(app) if not attr.startswith('_')]}")
                 return False
                 
-            return True
-            
         except ImportError as e:
             print_status(f"Could not import app module: {e}", "error")
             return False
             
     except Exception as e:
         print_status(f"Import-based launch failed: {e}", "error")
+        traceback.print_exc()
         return False
 
 def launch_method_4():
@@ -171,36 +185,39 @@ def launch_method_4():
     try:
         import gradio as gr
         
-        def basic_interface(message):
+        def status_interface():
             return """
             🎬 Magic Hour Remix Anything
             
-            The application is starting up...
+            System Status Check:
             
-            If you see this message, it means:
-            ✅ Gradio is working
-            ✅ The interface is accessible
-            ⏳ The full app is loading in the background
+            ✅ Gradio is working correctly
+            ✅ Interface is accessible  
+            ✅ Server is running
             
-            Please wait a moment and try uploading a video.
+            The main application may be loading. If this is the only interface you see:
             
-            If issues persist:
-            1. Restart the runtime
-            2. Run all setup cells again
-            3. Check the console for error messages
+            1. Try restarting the runtime (Runtime → Restart runtime)
+            2. Run the setup cells again
+            3. Check the console output for specific errors
+            4. Ensure all dependencies were installed correctly
+            
+            🔧 System Information:
+            - Python version: {sys.version}
+            - Gradio version: {gr.__version__}
             """
         
         demo = gr.Interface(
-            fn=basic_interface,
-            inputs=gr.Textbox(label="Status Check", placeholder="Type anything to test"),
-            outputs=gr.Textbox(label="System Status"),
-            title="🎬 Magic Hour Remix Anything",
-            description="AI-powered video object segmentation and tracking",
-            examples=[["test"]]
+            fn=lambda: status_interface(),
+            inputs=[],
+            outputs=gr.Textbox(label="System Status", lines=15),
+            title="🎬 Magic Hour Remix Anything - System Status",
+            description="System status and diagnostics interface",
+            allow_flagging="never"
         )
         
         print_status("Basic interface created", "success")
-        demo.launch(share=True, debug=True)
+        demo.launch(share=True, debug=False, show_error=True, quiet=False)
         return True
         
     except Exception as e:
@@ -209,6 +226,10 @@ def launch_method_4():
 
 def launch_with_fallbacks():
     """Launch the application with multiple fallback methods"""
+    print("🎬 Launching Magic Hour Remix Anything...")
+    print("🔗 Click the Gradio link when it appears below!")
+    print("⏳ The app may take 30-60 seconds to fully load...")
+    print("=" * 60)
     print("🎬 Magic Hour Remix Anything - Launch Script")
     print("=" * 50)
     
@@ -226,10 +247,8 @@ def launch_with_fallbacks():
     if memory_percent > 90:
         print_status("High memory usage detected! Consider restarting runtime.", "warning")
     
-    # Try launch methods in order
+    # Try launch methods in order (skip subprocess methods for Colab)
     launch_methods = [
-        ("Direct Execution", launch_method_1),
-        ("Memory-Optimized App", launch_method_2),
         ("Import-Based Launch", launch_method_3),
         ("Basic Interface", launch_method_4)
     ]
@@ -246,6 +265,7 @@ def launch_with_fallbacks():
                 return True
         except Exception as e:
             print_status(f"{method_name} failed: {e}", "error")
+            print(f"Detailed error: {traceback.format_exc()}")
             continue
     
     # If all methods failed
@@ -273,10 +293,9 @@ def quick_launch():
     os.environ['PYTHONPATH'] = '.'
     sys.path.insert(0, '.')
     
-    # Direct execution
+    # Try import-based launch directly
     try:
-        exec(open('app.py').read())
-        return True
+        return launch_method_3()
     except Exception as e:
         print_status(f"Quick launch failed: {e}", "error")
         return False
@@ -289,7 +308,11 @@ def main():
     parser.add_argument('--quick', action='store_true', help='Quick launch mode')
     parser.add_argument('--memory-check', action='store_true', help='Show memory status only')
     
-    args = parser.parse_args()
+    try:
+        args = parser.parse_args()
+    except:
+        # If argparse fails (common in Colab), use default behavior
+        args = type('Args', (), {'quick': False, 'memory_check': False})()
     
     if args.memory_check:
         get_memory_status()
@@ -300,10 +323,7 @@ def main():
     else:
         success = launch_with_fallbacks()
     
-    if success:
-        print("\n✅ Launch completed!")
-    else:
-        print("\n❌ Launch failed!")
+    if not success:
         sys.exit(1)
 
 if __name__ == "__main__":
