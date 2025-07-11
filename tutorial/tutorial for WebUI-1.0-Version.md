@@ -61,7 +61,7 @@
     - The current version only supports adding a mask for a single-object(The added objects are assigned the same ID).
     - We do not recommend adding a mask by clicking on `Segment result of first frame` under the `Stroke-Tab`, as this may result in bugs.
     
-## 5. Segment and Track in Video
+## 5. Remix in Video
 - Once the object to be tracked in the video is identified, you can begin tracking by clicking on the `Start Tracking` button. 
 - The results are displayed on the `output video` and `predicted masks`.You can download them.
 

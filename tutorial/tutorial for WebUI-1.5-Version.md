@@ -26,7 +26,7 @@ pip install -e git+https://github.com/IDEA-Research/GroundingDINO.git@main#egg=G
 </p>
 
 ### 5. Get mask of selected object by clicking `Detect` button
-- SAMTrack initialization may take some time.
+- Magic Hour Remix initialization may take some time.
 
 <p align="center">
 <img src="./img/detect_result.jpg" height="400", width="400">

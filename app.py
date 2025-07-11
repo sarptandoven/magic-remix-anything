@@ -1,3 +1,47 @@
+# Fix for Python 3.13 audioop compatibility
+import sys
+import warnings
+warnings.filterwarnings("ignore")
+
+class MockAudioop:
+    def __getattr__(self, name):
+        def mock_func(*args, **kwargs):
+            print(f"Warning: audioop.{name} not available in Python 3.13+")
+            return None
+        return mock_func
+
+sys.modules["audioop"] = MockAudioop()
+
+# GroundingDINO workaround
+try:
+    import groundingdino
+    from groundingdino.models import build_model
+    from groundingdino.util.slconfig import SLConfig
+    from groundingdino.util.utils import clean_state_dict, get_phrases_from_posmap
+    print("GroundingDINO successfully imported")
+    GROUNDING_DINO_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: GroundingDINO not available: {e}")
+    print("Text-based detection will not work, but other features should function")
+    GROUNDING_DINO_AVAILABLE = False
+    
+    # Create mock classes/functions
+    class MockSLConfig:
+        def __init__(self, *args, **kwargs):
+            pass
+    
+    def build_model(*args, **kwargs):
+        print("Warning: GroundingDINO not available")
+        return None
+    
+    def clean_state_dict(*args, **kwargs):
+        return {}
+    
+    def get_phrases_from_posmap(*args, **kwargs):
+        return []
+    
+    SLConfig = MockSLConfig
+
 from PIL.ImageOps import colorize, scale
 import gradio as gr
 import importlib
@@ -26,8 +70,60 @@ import numpy as np
 import json
 from tool.transfer_tools import mask2bbox
 
-from ast_master.prepare import ASTpredict
-from moviepy.editor import VideoFileClip 
+try:
+    from ast_master.prepare import ASTpredict
+    AST_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: AST audio model not available: {e}")
+    AST_AVAILABLE = False
+    def ASTpredict():
+        return [], []
+
+# MoviePy workaround
+try:
+    from moviepy import VideoFileClip
+    MOVIEPY_AVAILABLE = True
+    print("MoviePy successfully imported")
+except ImportError as e:
+    print(f"Warning: MoviePy not available: {e}")
+    print("Video functionality will be limited")
+    MOVIEPY_AVAILABLE = False
+    
+    class MockVideoFileClip:
+        def __init__(self, *args, **kwargs):
+            print("Warning: MoviePy not available - video functionality disabled")
+            self.audio = None
+        
+        def iter_frames(self, *args, **kwargs):
+            return []
+        
+        @property
+        def fps(self):
+            return 30
+        
+        @property 
+        def duration(self):
+            return 0
+        
+        def set_audio(self, audio):
+            return self
+        
+        def write_videofile(self, *args, **kwargs):
+            print("Warning: Video output disabled - MoviePy not available")
+    
+    VideoFileClip = MockVideoFileClip
+
+# Print component availability status
+print("\n" + "="*60)
+print("COMPONENT AVAILABILITY STATUS:")
+print("="*60)
+print(f"✓ GroundingDINO:     {'✓ Available' if GROUNDING_DINO_AVAILABLE else '✗ Not Available (text detection disabled)'}")
+print(f"✓ AST Audio Model:   {'✓ Available' if AST_AVAILABLE else '✗ Not Available (audio analysis disabled)'}")
+print(f"✓ MoviePy:           {'✓ Available' if MOVIEPY_AVAILABLE else '✗ Not Available (video processing limited)'}")
+print("="*60)
+print("Starting Segment Tracking Application...")
+print("="*60 + "\n")
+
 def clean():
     return None, None, None, None, None, None, [[], []]
 
@@ -482,7 +578,7 @@ def seg_track_app():
         gr.Markdown(
             '''
             <div style="text-align:center;">
-                <span style="font-size:3em; font-weight:bold;">Segment and Track Anything(SAM-Track)</span>
+                <span style="font-size:3em; font-weight:bold;">Magic Hour Remix Anything</span>
             </div>
             '''
         )
