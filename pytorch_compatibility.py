@@ -1,47 +1,43 @@
 """
 PyTorch 2.6+ Compatibility Module
-Handles the weights_only parameter change in torch.load
+Provides utilities for handling the weights_only parameter change in torch.load
 """
 
 import torch
-import sys
 from packaging import version
+
+def get_pytorch_version():
+    """Get the current PyTorch version as a parsed version object"""
+    return version.parse(torch.__version__)
+
+def is_pytorch_26_or_later():
+    """Check if PyTorch version is 2.6 or later"""
+    return get_pytorch_version() >= version.parse("2.6.0")
 
 def safe_torch_load(*args, **kwargs):
     """
-    Safe wrapper for torch.load that handles PyTorch 2.6+ weights_only parameter
+    Safe wrapper for torch.load that automatically adds weights_only=False for PyTorch 2.6+
     """
-    # Get PyTorch version
-    pytorch_version = version.parse(torch.__version__)
-    
     # If PyTorch 2.6 or later, and weights_only not explicitly set, use False
-    if pytorch_version >= version.parse("2.6.0"):
+    if is_pytorch_26_or_later():
         if 'weights_only' not in kwargs:
             kwargs['weights_only'] = False
     
     return torch.load(*args, **kwargs)
 
-def patch_torch_load():
-    """
-    Monkey patch torch.load to use our safe version
-    """
-    # Store original torch.load
-    if not hasattr(torch, '_original_load'):
-        torch._original_load = torch.load
-        torch.load = safe_torch_load
-        print("✅ PyTorch load compatibility patch applied")
+def check_pytorch_compatibility():
+    """Check and report PyTorch compatibility status"""
+    version_info = get_pytorch_version()
+    if is_pytorch_26_or_later():
+        print(f"✅ PyTorch {version_info} detected - using weights_only=False for model loading")
+        return True
+    else:
+        print(f"✅ PyTorch {version_info} detected - no compatibility issues")
+        return False
 
-def unpatch_torch_load():
-    """
-    Restore original torch.load
-    """
-    if hasattr(torch, '_original_load'):
-        torch.load = torch._original_load
-        delattr(torch, '_original_load')
-        print("🔄 PyTorch load compatibility patch removed")
-
-# Apply patch automatically when module is imported
-try:
-    patch_torch_load()
-except Exception as e:
-    print(f"⚠️ Could not apply PyTorch compatibility patch: {e}") 
+# Check compatibility when module is imported
+if __name__ != "__main__":
+    try:
+        check_pytorch_compatibility()
+    except Exception as e:
+        print(f"⚠️ PyTorch compatibility check failed: {e}") 
