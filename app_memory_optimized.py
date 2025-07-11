@@ -5,11 +5,7 @@ import gc
 import torch
 warnings.filterwarnings("ignore")
 
-# Apply PyTorch 2.6+ compatibility patch early
-try:
-    import pytorch_compatibility
-except Exception as e:
-    print(f"⚠️ PyTorch compatibility check failed: {e}")
+# PyTorch compatibility check removed - direct fixes applied to torch.load calls
 
 # Memory optimization settings
 torch.backends.cudnn.benchmark = False
