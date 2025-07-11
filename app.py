@@ -81,7 +81,7 @@ except ImportError as e:
 
 # MoviePy workaround
 try:
-    from moviepy import VideoFileClip
+    from moviepy.editor import VideoFileClip
     MOVIEPY_AVAILABLE = True
     print("MoviePy successfully imported")
 except ImportError as e:
