@@ -266,6 +266,9 @@ logs/
 !assets/
 !assets/**
 
+# Third-party repositories/extensions
+Pytorch-Correlation-extension/
+
 # Temporary setup files
 GITHUB_README.md
 GITHUB_SETUP_INSTRUCTIONS.md
