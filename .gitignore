@@ -288,10 +288,17 @@ cym_utils
 /aot/results
 /aot/pretrain_models
 /aot/datasets
-/ast_master 
+/ast_master
 
 # Local artifacts and secrets
 .env.*
 !.env.example
 *.pem
 *.key
+# Demo/runtime media artifacts kept out of git
+assets/*.zip
+assets/*.mp4
+assets/*.gif
+sam/assets/*.png
+tutorial/img/*.jpg
+sam/notebooks/*.ipynb

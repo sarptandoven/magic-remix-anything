@@ -1,90 +1,61 @@
 # Magic Hour Remix Setup Instructions
 
 ## Prerequisites
-- macOS with Apple Silicon
-- Python 3.12 (recommended) or Python 3.11 for better compatibility
+- Python 3.10-3.12. Python 3.11 is the safest local default for the current ML dependency stack.
+- A CUDA-capable NVIDIA GPU is recommended for local inference. CPU-only and Apple Silicon setups may work for limited tests but will be much slower and may need package changes.
+- `git`, `ffmpeg`, and enough disk space for model checkpoints.
 
-## Complete Setup Steps
+## Quick local setup
 
-### 1. Create Python 3.12 Environment (Recommended)
+### 1. Create and activate a virtual environment
 ```bash
-# Install Python 3.12 using pyenv (if you have it)
-pyenv install 3.12.0
-pyenv local 3.12.0
-
-# Or use Python 3.12 from Homebrew
-brew install python@3.12
-```
-
-### 2. Set up Virtual Environment
-```bash
-# Use Python 3.12 for better compatibility
-python3.12 -m venv venv
+python3.11 -m venv venv
 source venv/bin/activate
+python -m pip install --upgrade pip
 ```
 
-### 3. Install Core Dependencies
+If you do not have Python 3.11, use Python 3.10 or 3.12 instead. Avoid Python 3.13 for now because several ML packages may not have compatible wheels.
+
+### 2. Install dependencies
+
+For CUDA Linux machines:
 ```bash
-pip install --upgrade pip
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-pip install Pillow opencv-python matplotlib scikit-image numpy moviepy
-pip install gradio==3.39.0 gdown pycocotools timm==0.4.5
-pip install transformers supervision addict yapf
+pip install -r requirements.txt
 ```
 
-### 4. Install SAM
+For macOS or CPU-only development, install the PyTorch build recommended by https://pytorch.org/get-started/locally/ first, then run:
 ```bash
-cd sam
-pip install -e .
-cd ..
+pip install -r requirements.txt
 ```
 
-### 5. Install GroundingDINO (the key missing piece)
+### 3. Install local third-party packages
 ```bash
-# Install dependencies first
-pip install transformers==4.27.4
-pip install supervision
-
-# Clone and install GroundingDINO
-git clone https://github.com/IDEA-Research/GroundingDINO.git
-cd GroundingDINO
-pip install -e .
-cd ..
+pip install -e ./sam
 ```
 
-### 6. Install Pytorch Correlation Extension
-```bash
-cd Pytorch-Correlation-extension
-python setup.py install
-cd ..
-```
+GroundingDINO is installed from `requirements.txt` via `groundingdino-py==0.4.0`.
 
-### 7. Download Model Checkpoints
+### 4. Download model checkpoints
 ```bash
-# The script should now work
 bash script/download_ckpt.sh
 ```
 
-### 8. Run the Application
+Checkpoints are written to `ckpt/` and `ast_master/pretrained_models/`, both of which are ignored by git.
+
+### 5. Run the app
 ```bash
 python app.py
 ```
 
-## Alternative: Using Docker
-If you continue having issues, consider using Docker:
+For Colab, prefer the maintained notebook linked from the README: `Magic_Hour_Remix_Anything_Simple.ipynb`.
 
-```bash
-# Create a Dockerfile with Python 3.11/3.12 base image
-# This ensures a clean environment with proper dependencies
-```
-
-## Key Notes
-- Python 3.13 has compatibility issues with several dependencies
-- Use Python 3.12 or 3.11 for best results
-- GroundingDINO requires specific versions of transformers
-- All model checkpoints should be in the `ckpt/` directory
+## Notes
+- `script/install.sh` is a convenience script for Colab/Linux-style environments. Review it before running locally because it clones and installs external repositories.
+- `colab_setup.py` and `colab_launch.py` are optimized for Google Colab and may install packages or launch Gradio with `share=True`.
+- Short, low-resolution videos are recommended for first tests.
 
 ## Troubleshooting
-- If you get CUDA errors, install CPU-only versions of PyTorch
-- If audioop errors persist, the fix is already in app.py
-- For M1/M2 Macs, ensure you're using ARM64 compatible packages 
+- If CUDA packages fail on macOS, reinstall PyTorch using the official macOS command from pytorch.org.
+- If imports fail after dependency installation, restart the Python runtime and try again.
+- If model files are missing, rerun `bash script/download_ckpt.sh`.

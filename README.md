@@ -72,8 +72,8 @@ python colab_launch.py
 ```
 
 ### **Requirements**
-- Python 3.8+
-- CUDA-compatible GPU (recommended)
+- Python 3.10-3.12 (Python 3.11 recommended locally)
+- CUDA-compatible GPU recommended for full-speed local inference
 - 8GB+ RAM
 - 10GB+ free disk space
 
