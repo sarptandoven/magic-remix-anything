@@ -189,15 +189,15 @@ health_check()
 ## 📚 **Documentation**
 
 - **[Setup Instructions](setup_instructions.md)**: Detailed installation guide
-- **[Tutorial](tutorial/)**: Step-by-step usage tutorials
-- **[API Reference](docs/)**: Technical documentation
-- **[Examples](examples/)**: Sample videos and use cases
+- **[Tutorials](tutorial/)**: Step-by-step usage tutorials
+- **Colab notebooks**: End-to-end examples are available in the `Magic_Hour_Remix_Anything_*.ipynb` notebooks at the repository root
+- **Sample assets**: Demo videos and images are available in [`assets/`](assets/)
 
 ---
 
 ## 🤝 **Contributing**
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+Contributions are welcome. There is not a separate contributing guide yet, so please keep changes focused, document setup or behavior changes, and run the relevant local checks before opening a pull request.
 
 ### **Development Setup**
 ```bash
@@ -211,7 +211,7 @@ python colab_setup.py
 
 ## 📄 **License**
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+A project-level license file has not been added yet. Third-party components included in this repository retain their own licenses, including [`aot/LICENSE`](aot/LICENSE) and [`sam/LICENSE`](sam/LICENSE).
 
 ---
 
