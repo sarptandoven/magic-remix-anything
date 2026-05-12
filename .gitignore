@@ -289,3 +289,9 @@ cym_utils
 /aot/pretrain_models
 /aot/datasets
 /ast_master 
+
+# Local artifacts and secrets
+.env.*
+!.env.example
+*.pem
+*.key
